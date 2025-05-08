@@ -32,7 +32,7 @@ The app connects to the **Starling Sandbox API**, fetches recent transaction dat
 
 ### 1. Clone the Repository
 
-git clone https://github.com/waelkanbar/starling-roundup-app.git
-cd starling-roundup-app
-npm install
-npm run dev
+- git clone https://github.com/waelkanbar/starling-roundup-app.git
+- cd starling-roundup-app
+- npm install
+- npm run dev
