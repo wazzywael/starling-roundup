@@ -1,12 +1,11 @@
-// src/api/starlingApi.ts
+import type { Account, Savings, Transaction } from "../types/types";
 import { http } from "./http";
 
 /**
  * Gets the primary user account from Starling API.
  */
 export const getAccounts = async () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await http.request<{ accounts: any[] }>({
+  const response = await http.request<{ accounts: Account[] }>({
     url: `/api/accounts`,
     method: "GET",
   });
@@ -28,8 +27,7 @@ export const getTransactions = async (
 
   console.log("changes since", changesSince);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await http.request<{ feedItems: { any: any } }>({
+  const response = await http.request<{ feedItems: Transaction[] }>({
     url: `/api/feed/account/${accountUid}/category/${categoryUid}`,
     method: "GET",
     params: {
@@ -68,8 +66,7 @@ export const createSavingsGoal = async (accountUid: string) => {
  * Fetch all savings goals.
  */
 export const getSavingsGoals = async (accountUid: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await http.request<{ savingsGoalList: any[] }>({
+  const response = await http.request<{ savingsGoalList: Savings[] }>({
     url: `/api/account/${accountUid}/savings-goals`,
     method: "GET",
   });

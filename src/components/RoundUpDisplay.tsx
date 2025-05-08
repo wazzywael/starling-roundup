@@ -1,4 +1,3 @@
-// src/components/RoundUpDisplay.tsx
 import React from "react";
 
 interface Props {

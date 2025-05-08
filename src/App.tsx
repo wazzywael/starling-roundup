@@ -11,7 +11,6 @@ function App() {
   const [roundUp, setRoundUp] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [accountUid, setAccountUid] = useState<string>("");
-  const [defaultCategory, setDefaultCategory] = useState<string>("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
@@ -19,7 +18,6 @@ function App() {
       try {
         const account = await getAccounts();
         setAccountUid(account.accountUid);
-        setDefaultCategory(account.defaultCategory)
         console.log("account", account.accountUid);
 
         const items = await getTransactions(account.accountUid, account.defaultCategory);

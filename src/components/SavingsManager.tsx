@@ -4,6 +4,8 @@ import {
   getSavingsGoals,
   addToSavingsGoal,
 } from "../api/starlingApi";
+import type { Savings } from "../types/types";
+import type { AxiosError } from "axios";
 
 type Props = {
   roundUpAmount: number;
@@ -17,10 +19,9 @@ const SavingsManager: React.FC<Props> = ({ accountUid, roundUpAmount }) => {
     try {
       setStatus("Checking savings goals...");
 
-      const goals = await getSavingsGoals(accountUid);
+      const goals: Savings[] = (await getSavingsGoals(accountUid)).savingsGoalList;
       console.log('goals goals', goals);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let goal = goals.savingsGoalList.find((g: any) => g.name === "Round-up Saver");
+      let goal: Pick<Savings, 'savingsGoalUid'> | undefined = goals.find((g: Savings) => g.name === "Round-up Saver");
       console.log("goal", goal);
 
       if (!goal) {
@@ -37,10 +38,23 @@ const SavingsManager: React.FC<Props> = ({ accountUid, roundUpAmount }) => {
       setStatus(`Transferring £${(roundUpAmount / 100).toFixed(2)}...`);
       await addToSavingsGoal(accountUid, goal.savingsGoalUid, roundUpAmount);
       setStatus("Transfer successful!");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error(err);
-      setStatus("Error occurred during transfer.");
+    } catch (err) {
+      const axiosError = err as AxiosError;
+
+      if (axiosError.response) {
+        const errorData = axiosError.response.data as {
+          error?: string;
+          error_description?: string;
+        };
+    
+        console.error(
+          `API Error: ${axiosError.response.status} - ${errorData.error_description || axiosError.message}`
+        );
+        setStatus("API error occurred during transfer.");
+      } else {
+        console.error("Unexpected error:", axiosError.message);
+        setStatus("Unexpected error occurred.");
+      }
     }
   };
 

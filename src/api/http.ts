@@ -1,4 +1,4 @@
-import axios, { type AxiosRequestConfig } from "axios";
+import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 
 const instance = axios.create({
   baseURL: "",
@@ -8,21 +8,25 @@ const instance = axios.create({
 });
 
 export const http = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  request: async <T = any>(config: AxiosRequestConfig): Promise<T> => {
+  request: async <T = unknown>(config: AxiosRequestConfig): Promise<T> => {
     try {
       const response = await instance.request<T>(config);
       return response.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if (error.response) {
-        console.error("API Error:", error.response.data);
-        throw new Error(
-          `HTTP ${error.response.status}: ${
-            error.response.data?.error_description || error.message
-          }`
-        );
+    } catch (error) {
+      const axiosError = error as AxiosError;
+
+      if (axiosError.response) {
+        const data = axiosError.response.data as {
+          error?: string;
+          error_description?: string;
+        };
+
+        const message =
+          data?.error_description || axiosError.message || "Unknown error";
+
+        throw new Error(`HTTP ${axiosError.response.status}: ${message}`);
       }
+
       throw new Error("Unexpected error occurred");
     }
   },

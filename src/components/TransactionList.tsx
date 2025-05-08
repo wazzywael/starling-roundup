@@ -1,4 +1,3 @@
-// src/components/TransactionList.tsx
 import React from "react";
 import type { Transaction } from "../types/types";
 
