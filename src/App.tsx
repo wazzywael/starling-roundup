@@ -36,17 +36,22 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <h1>Starling Round-Up Saver</h1>
-      {loading ? (
-        <p>Loading transactions...</p>
-      ) : (
-        <>
-          <TransactionList transactions={transactions} />
-          <RoundUpDisplay roundUpAmount={roundUp} />
-          <SavingsManager accountUid={accountUid} roundUpAmount={roundUp}/>
-        </>
-      )}
+    <div className="min-h-screen bg-gray-100 p-6">
+      <main className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 space-y-6 animate-fade-in">
+        <h1 className="text-3xl font-bold text-indigo-700 mb-2">
+          💰 Starling Round-Up Saver
+        </h1>
+
+        {loading ? (
+          <p className="text-gray-600">Loading transactions...</p>
+        ) : (
+          <>
+            <RoundUpDisplay roundUpAmount={roundUp} />
+            <SavingsManager accountUid={accountUid} roundUpAmount={roundUp} />
+            <TransactionList transactions={transactions} />
+          </>
+        )}
+      </main>
     </div>
   );
 }

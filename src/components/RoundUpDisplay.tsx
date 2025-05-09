@@ -8,9 +8,9 @@ const RoundUpDisplay: React.FC<Props> = ({ roundUpAmount }) => {
   const pounds = (roundUpAmount / 100).toFixed(2);
 
   return (
-    <div>
-      <h2>Potential Round-Up</h2>
-      <p>You could save £{pounds} this week by rounding up your transactions.</p>
+    <div className="p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm">
+      <h2 className="text-green-700 font-bold">Potential Round-Up</h2>
+      <p>You could save <span className="text-blue-600 font-bold">£{pounds}</span> this week by rounding up your transactions.</p>
     </div>
   );
 };
