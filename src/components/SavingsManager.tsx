@@ -140,7 +140,7 @@ const SavingsManager: React.FC<Props> = ({ accountUid, roundUpAmount }) => {
       )}
 
       {showSavings && allGoals.length > 0 && (
-        <div className="mt-4 border-t pt-4">
+        <div className="mt-4">
           <h3 className="font-semibold text-gray-700 mb-2">
             💼 Your Savings Goals:
           </h3>

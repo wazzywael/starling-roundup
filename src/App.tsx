@@ -5,7 +5,6 @@ import SavingsManager from "./components/SavingsManager";
 import type { Transaction } from "./types/types";
 import { calculateRoundUp } from "./utils/roundupCalculator";
 import { getAccounts, getTransactions } from "./api/starlingApi";
-import RoundUpDisplay from "./components/RoundUpDisplay";
 
 function App() {
   const [roundUp, setRoundUp] = useState<number>(0);
@@ -40,7 +39,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <main className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 space-y-6 animate-fade-in">
+      <main className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-6 space-y-6 animate-fade-in">
         <h1 className="text-3xl font-bold text-indigo-700 mb-2">
           💰 Starling Round-Up Saver
         </h1>
