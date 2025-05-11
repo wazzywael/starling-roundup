@@ -20,7 +20,10 @@ function App() {
         setAccountUid(account.accountUid);
         console.log("account", account.accountUid);
 
-        const items = await getTransactions(account.accountUid, account.defaultCategory);
+        const items = await getTransactions(
+          account.accountUid,
+          account.defaultCategory
+        );
         setTransactions(items);
 
         const total = calculateRoundUp(items);
@@ -46,7 +49,6 @@ function App() {
           <p className="text-gray-600">Loading transactions...</p>
         ) : (
           <>
-            <RoundUpDisplay roundUpAmount={roundUp} />
             <SavingsManager accountUid={accountUid} roundUpAmount={roundUp} />
             <TransactionList transactions={transactions} />
           </>

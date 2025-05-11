@@ -15,6 +15,9 @@ export interface Transaction {
 }
 
 export interface Savings {
-  name: string,
-  savingsGoalUid: string,
+  name: string;
+  savingsGoalUid: string;
+  totalSaved: {
+    minorUnits: number;
+  };
 }

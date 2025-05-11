@@ -1,32 +1,42 @@
 @import "tailwindcss";
 
 body {
-    font-family: Arial, sans-serif;
-    margin: 2rem;
-    background-color: #f6f7f8;
+  font-family: Arial, sans-serif;
+  margin: 2rem;
+  background-color: #f6f7f8;
+}
+
+.App {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+button {
+  background-color: #0d6efd;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
   }
-  
-  .App {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    max-width: 500px;
-    margin: 0 auto;
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
-  
-  button {
-    background-color: #0d6efd;
-    color: white;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
+}
