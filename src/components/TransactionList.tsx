@@ -5,6 +5,23 @@ interface Props {
   transactions: Transaction[];
 }
 
+// Mapping raw references to friendly names
+const referenceMapping: Record<string, string> = {
+  INTERNAL_TRANSFER: "Transfer to Internal Account",
+  "External Payment": "Outgoing Payment",
+};
+
+const getFriendlyReference = (reference: string) => {
+  const trimmed = reference.trim();
+
+  if (trimmed.startsWith("Ref:")) {
+    const refNumber = trimmed.slice(4).trim();
+    return `Incoming Payment: ${refNumber}`;
+  }
+
+  return referenceMapping[trimmed] || trimmed.replace(/_/g, " ");
+};
+
 const TransactionList: React.FC<Props> = ({ transactions }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
@@ -45,7 +62,9 @@ const TransactionList: React.FC<Props> = ({ transactions }) => {
               }`}
             >
               <div className="truncate text-left">
-                {item.reference || item.source}
+                {item.reference
+                  ? getFriendlyReference(item.reference)
+                  : getFriendlyReference(item.source)}
               </div>
               <div className="text-center">
                 {new Date(item.transactionTime).toLocaleDateString("en-GB", {
