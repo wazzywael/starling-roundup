@@ -1,4 +1,3 @@
-import React, { useEffect, useRef, useState } from "react";
 import {
   createSavingsGoal,
   getSavingsGoals,
@@ -8,48 +7,121 @@ import type { Savings } from "../types/types";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import RoundUpDisplay from "./RoundUpDisplay";
+import ConfirmDialog from "./ConfirmDialog";
+import { useCallback, useEffect, useReducer } from "react";
 
 type Props = {
   roundUpAmount: number;
   accountUid: string;
+  cooldownActive: boolean;
+  lastRoundUpDate: Date | null;
+  hasPendingRoundUp: boolean;
+  refreshData: () => Promise<void>;
 };
 
-const SavingsManager: React.FC<Props> = ({ accountUid, roundUpAmount }) => {
-  const [loading, setLoading] = useState(false);
-  const [totalSaved, setTotalSaved] = useState<number | null>(null);
-  const [hasTransferred, setHasTransferred] = useState(false);
-  const [isTransferComplete, setIsTransferComplete] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [allGoals, setAllGoals] = useState<Savings[]>([]);
-  const [showSavings, setShowSavings] = useState(false);
-  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+// Reducer state and actions
+type State = {
+  loading: boolean;
+  totalSaved: number | null;
+  error: string | null;
+  showDialog: boolean;
+  showSavings: boolean;
+  allGoals: Savings[];
+};
 
-  useEffect(() => {
-    if (roundUpAmount > 0) {
-      setHasTransferred(false);
-      setIsTransferComplete(false);
-    }
-  }, [roundUpAmount]);
+type Action =
+  | { type: "START_TRANSFER" }
+  | { type: "TRANSFER_SUCCESS"; payload: number; goals: Savings[] }
+  | { type: "TRANSFER_ERROR"; payload: string }
+  | { type: "SET_GOALS"; payload: { saved: number; goals: Savings[] } }
+  | { type: "TOGGLE_DIALOG" }
+  | { type: "TOGGLE_SAVINGS" };
 
-  useEffect(() => {
-    if (showConfirmDialog) {
-      confirmButtonRef.current?.focus();
+const initialState: State = {
+  loading: false,
+  totalSaved: null,
+  error: null,
+  showDialog: false,
+  showSavings: false,
+  allGoals: [],
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "START_TRANSFER":
+      return { ...state, loading: true, error: null };
+    case "TRANSFER_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        totalSaved: action.payload,
+        allGoals: action.goals,
+        error: null,
+      };
+    case "TRANSFER_ERROR":
+      return { ...state, loading: false, error: action.payload };
+    case "SET_GOALS":
+      return {
+        ...state,
+        totalSaved: action.payload.saved,
+        allGoals: action.payload.goals,
+        error: null,
+      };
+    case "TOGGLE_DIALOG":
+      return { ...state, showDialog: !state.showDialog };
+    case "TOGGLE_SAVINGS":
+      return { ...state, showSavings: !state.showSavings };
+    default:
+      return state;
+  }
+}
+
+const SavingsManager: React.FC<Props> = ({
+  accountUid,
+  roundUpAmount,
+  cooldownActive,
+  lastRoundUpDate,
+  hasPendingRoundUp,
+  refreshData,
+}) => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const { loading, totalSaved, showDialog, showSavings, allGoals } = state;
+
+  const isDisabled = loading || roundUpAmount === 0 || cooldownActive;
+
+  const loadAndDispatchGoals = useCallback(async () => {
+    try {
+      const goals = (await getSavingsGoals(accountUid)).savingsGoalList;
+      const goal = goals.find((g) => g.name === "Round-up Saver");
+      const saved = goal?.totalSaved?.minorUnits ?? 0;
+
+      dispatch({ type: "SET_GOALS", payload: { saved, goals } });
+      return goals;
+    } catch (err) {
+      console.error("Failed to load savings goals", err);
+      return null;
     }
-  }, [showConfirmDialog]);
+  }, [accountUid]);
+
+  // Automatically fetch goals if in cooldown mode (post-transfer)
+  useEffect(() => {
+    if (cooldownActive && state.allGoals.length === 0) {
+      loadAndDispatchGoals();
+    }
+  }, [cooldownActive, state.allGoals.length, loadAndDispatchGoals]);
 
   const handleTransfer = async () => {
-    setLoading(true);
+    dispatch({ type: "START_TRANSFER" });
+
     try {
-      const goals: Savings[] = (await getSavingsGoals(accountUid))
-        .savingsGoalList;
-      let goal: Pick<Savings, "savingsGoalUid"> | undefined = goals.find(
-        (g: Savings) => g.name === "Round-up Saver"
-      );
+      const goals = (await getSavingsGoals(accountUid)).savingsGoalList;
+      let goal = goals.find((g) => g.name === "Round-up Saver");
 
       if (!goal) {
         toast.success("New Savings Goal Created!");
         const newGoalUid = await createSavingsGoal(accountUid);
-        goal = { savingsGoalUid: newGoalUid };
+        goal = { savingsGoalUid: newGoalUid } as Savings;
       }
 
       if (roundUpAmount === 0) {
@@ -59,80 +131,99 @@ const SavingsManager: React.FC<Props> = ({ accountUid, roundUpAmount }) => {
 
       await addToSavingsGoal(accountUid, goal.savingsGoalUid, roundUpAmount);
 
-      const updatedGoals: Savings[] = (await getSavingsGoals(accountUid))
-        .savingsGoalList;
-      const updatedGoal = updatedGoals.find(
-        (g) => g.savingsGoalUid === goal!.savingsGoalUid
-      );
-
-      const savedAmount = updatedGoal?.totalSaved?.minorUnits ?? 0;
-      setTotalSaved(savedAmount);
-      setAllGoals(updatedGoals);
-      setHasTransferred(true);
-      setIsTransferComplete(true);
+      const updatedGoals = await loadAndDispatchGoals();
+      if (!updatedGoals) return;
+      await refreshData();
       toast.success("Transfer Successful!");
     } catch (err) {
       const axiosError = err as AxiosError;
-
       if (axiosError.response) {
         const errorData = axiosError.response.data as {
           error?: string;
           error_description?: string;
         };
-
-        console.error(
-          `API Error: ${axiosError.response.status} - ${
-            errorData.error_description || axiosError.message
-          }`
-        );
-        toast.error("💰 Transfer Unsuccessful!");
-      } else {
-        console.error("Unexpected error:", axiosError.message);
+        const message = errorData.error_description || axiosError.message;
+        dispatch({ type: "TRANSFER_ERROR", payload: message });
         toast.error("💰 Transfer Unsuccessful!");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div>
-      {/* Pass the success status and round-up amount to the RoundUpDisplay component */}
       <RoundUpDisplay
         roundUpAmount={roundUpAmount}
-        isTransferComplete={isTransferComplete}
+        cooldownActive={cooldownActive}
+        hasPendingRoundUp={hasPendingRoundUp}
       />
 
-      <div className="mt-4">
+      <div className="mt-4 space-y-2">
         <button
-          onClick={() => setShowConfirmDialog(true)}
-          disabled={loading || hasTransferred || roundUpAmount === 0}
-          className={`w-full py-2 px-4 rounded-md font-medium transition ${
-            hasTransferred || roundUpAmount === 0
+          onClick={() => dispatch({ type: "TOGGLE_DIALOG" })}
+          disabled={isDisabled}
+          className={`w-64 py-2 px-4 rounded-md font-medium transition ${
+            isDisabled
               ? "bg-gray-400 text-white cursor-not-allowed"
               : "bg-indigo-600 text-white hover:bg-indigo-700"
           }`}
         >
-          {loading
+          {cooldownActive
+            ? "Weekly Transfer Limit Reached"
+            : loading
             ? "Transferring..."
-            : hasTransferred
-            ? "Round-Up Transferred"
-            : "Transfer Round-Up"}
+            : "Transfer Round-Up Amount"}
         </button>
+
+        {cooldownActive && lastRoundUpDate && (
+          <div className="mt-4 p-4 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⏳</span>
+              <p>
+                <strong>Last round-up:</strong>{" "}
+                {lastRoundUpDate.toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🗓</span>
+              <p>
+                <strong>Next round-up available in:</strong>{" "}
+                <span className="font-semibold">
+                  {Math.max(
+                    0,
+                    7 -
+                      Math.floor(
+                        (Date.now() - lastRoundUpDate.getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                  )}{" "}
+                  day(s)
+                </span>
+              </p>
+            </div>
+
+            {totalSaved !== null && (
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💰</span>
+                <p>
+                  <strong>Total saved so far:</strong>{" "}
+                  <span className="text-indigo-700 font-semibold">
+                    £{(totalSaved / 100).toFixed(2)}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {totalSaved !== null && (
-        <p className="text-gray-700 mt-2">
-          💰 Total saved in this savings goal:{" "}
-          <span className="font-semibold text-indigo-600">
-            £{(totalSaved / 100).toFixed(2)}
-          </span>
-        </p>
-      )}
-
-      {hasTransferred && (
+      {cooldownActive && (
         <button
-          onClick={() => setShowSavings(!showSavings)}
+          onClick={() => dispatch({ type: "TOGGLE_SAVINGS" })}
           className="mt-4 text-indigo-600 text-sm"
         >
           {showSavings ? "Hide" : "View"} all Savings Goals
@@ -141,7 +232,7 @@ const SavingsManager: React.FC<Props> = ({ accountUid, roundUpAmount }) => {
 
       {showSavings && allGoals.length > 0 && (
         <div className="mt-4">
-          <h3 className="font-semibold text-gray-700 mb-2">
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
             💼 Your Savings Goals:
           </h3>
           <ul className="space-y-2">
@@ -166,54 +257,15 @@ const SavingsManager: React.FC<Props> = ({ accountUid, roundUpAmount }) => {
         </div>
       )}
 
-      {showConfirmDialog && (
-        <div
-          className="fixed inset-0 flex items-center justify-center backdrop-blur z-50"
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setShowConfirmDialog(false);
-          }}
-          tabIndex={-1} // ensures the div can receive keyboard events
-        >
-          <div
-            className="bg-white rounded-lg p-6 shadow-lg w-full max-w-md transform transition-transform duration-200 scale-95 animate-fade-in"
-            style={{ animation: "fadeIn 0.2s ease-out forwards" }}
-            ref={(el) => {
-              // Focus the confirm button after mount
-              if (el) {
-                const confirmBtn = el.querySelector(
-                  "#confirm-btn"
-                ) as HTMLButtonElement;
-                confirmBtn?.focus();
-              }
-            }}
-          >
-            <h2 className="text-lg font-semibold mb-4">Confirm Transfer</h2>
-            <p className="mb-6">
-              Are you sure you want to transfer{" "}
-              <strong>£{(roundUpAmount / 100).toFixed(2)}</strong> to your
-              Round-up Saver?
-            </p>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={() => setShowConfirmDialog(false)}
-                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                id="confirm-btn"
-                onClick={async () => {
-                  setShowConfirmDialog(false);
-                  await handleTransfer();
-                }}
-                className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={showDialog}
+        amount={roundUpAmount}
+        onConfirm={async () => {
+          dispatch({ type: "TOGGLE_DIALOG" });
+          await handleTransfer();
+        }}
+        onCancel={() => dispatch({ type: "TOGGLE_DIALOG" })}
+      />
     </div>
   );
 };
