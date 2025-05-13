@@ -14,7 +14,7 @@ const RoundUpDisplay: React.FC<Props> = ({
       <h2 className="text-lg font-semibold text-gray-800">Benefit from Round-Up</h2>
 
       {!cooldownActive && roundUpAmount > 0 && (
-        <p className="text-indigo-700 mt-2">
+        <p className="text-indigo-700 mt-2" data-testid="roundup-message">
           🎯 You could save <strong>£{(roundUpAmount / 100).toFixed(2)}</strong>{" "}
           now!
         </p>
@@ -27,7 +27,7 @@ const RoundUpDisplay: React.FC<Props> = ({
       )}
 
       {cooldownActive && hasPendingRoundUp && (
-        <p className="text-indigo-700 mt-2">
+        <p className="text-indigo-700 mt-2" data-testid="next-roundup-message">
           🕒 You'll be able to save{" "}
           <strong>£{(roundUpAmount / 100).toFixed(2)}</strong> in your next
           weekly round-up.

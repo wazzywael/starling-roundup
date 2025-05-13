@@ -59,7 +59,11 @@ function reducer(state: State, action: Action): State {
         error: null,
       };
     case "TRANSFER_ERROR":
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
     case "SET_GOALS":
       return {
         ...state,
@@ -135,6 +139,11 @@ const SavingsManager: React.FC<Props> = ({
       if (!updatedGoals) return;
       await refreshData();
       toast.success("Transfer Successful!");
+      dispatch({
+        type: "TRANSFER_SUCCESS",
+        payload: roundUpAmount,
+        goals: updatedGoals,
+      });
     } catch (err) {
       const axiosError = err as AxiosError;
       if (axiosError.response) {
