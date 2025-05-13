@@ -9,7 +9,6 @@ export const getAccounts = async () => {
     url: `/api/accounts`,
     method: "GET",
   });
-  console.log("response getAccounts", response);
 
   return response.accounts[0]; // Adjust if needed
 };
@@ -25,8 +24,6 @@ export const getTransactions = async (
     Date.now() - 7 * 24 * 60 * 60 * 1000
   ).toISOString();
 
-  console.log("changes since", changesSince);
-
   const response = await http.request<{ feedItems: Transaction[] }>({
     url: `/api/feed/account/${accountUid}/category/${categoryUid}`,
     method: "GET",
@@ -34,8 +31,6 @@ export const getTransactions = async (
       changesSince,
     },
   });
-
-  console.log("response getTransactions", response);
 
   return response.feedItems;
 };
@@ -70,7 +65,7 @@ export const getSavingsGoals = async (accountUid: string) => {
     url: `/api/account/${accountUid}/savings-goals`,
     method: "GET",
   });
-  console.log("response getSavings", response);
+
   return response || [];
 };
 
