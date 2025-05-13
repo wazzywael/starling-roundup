@@ -1,32 +1,43 @@
-import React from "react";
+type Props = {
+  roundUpAmount: number;
+  cooldownActive: boolean;
+  hasPendingRoundUp: boolean;
+};
 
-interface Props {
-  roundUpAmount: number; // in minor units
-  isTransferComplete: boolean;
-}
-
-const RoundUpDisplay: React.FC<Props> = ({ roundUpAmount, isTransferComplete }) => {
-  const pounds = (roundUpAmount / 100).toFixed(2);
-
+const RoundUpDisplay: React.FC<Props> = ({
+  roundUpAmount,
+  cooldownActive,
+  hasPendingRoundUp,
+}) => {
   return (
     <div className="p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm">
-      {isTransferComplete ? (
-        <div>
-          <h2 className="text-green-700 font-bold">Congratulations on Saving!</h2>
-          <p>
-            You saved <span className="text-blue-600 font-bold">£{pounds}</span>{" "}
-            this Round-Up!
-          </p>
-        </div>
-      ) : (
-        <div>
-          <h2 className="text-green-700 font-bold">Potential Round-Up</h2>
-          <p>
-            You could save{" "}
-            <span className="text-blue-600 font-bold">£{pounds}</span> this week
-            by rounding up your transactions.
-          </p>
-        </div>
+      <h2 className="text-lg font-semibold text-gray-800">Benefit from Round-Up</h2>
+
+      {!cooldownActive && roundUpAmount > 0 && (
+        <p className="text-indigo-700 mt-2">
+          🎯 You could save <strong>£{(roundUpAmount / 100).toFixed(2)}</strong>{" "}
+          now!
+        </p>
+      )}
+
+      {cooldownActive && !hasPendingRoundUp && (
+        <p className="text-green-700 mt-2">
+          ✅ Congratulations, you’ve already transferred your last round-up amount!
+        </p>
+      )}
+
+      {cooldownActive && hasPendingRoundUp && (
+        <p className="text-indigo-700 mt-2">
+          🕒 You'll be able to save{" "}
+          <strong>£{(roundUpAmount / 100).toFixed(2)}</strong> in your next
+          weekly round-up.
+        </p>
+      )}
+
+      {!cooldownActive && roundUpAmount === 0 && (
+        <p className="text-gray-600 mt-2">
+          No round-up eligible transactions yet.
+        </p>
       )}
     </div>
   );

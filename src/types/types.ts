@@ -8,7 +8,9 @@ export interface Transaction {
     currency: string;
     minorUnits: number;
   };
+  counterPartyName: string;
   direction: "IN" | "OUT";
+  feedItemUid: string;
   transactionTime: string;
   source: string;
   reference: string;
