@@ -10,8 +10,9 @@ The app connects to the **Starling Sandbox API**, fetches recent transaction dat
 
 - React + TypeScript
 - Axios (for HTTP requests)
-- Vite (React project boilerplate)
+- Vite (for fast development and build tooling)
 - CSS Modules and plain CSS for styling
+- @testing-library/react (for UI testing)
 
 ---
 
@@ -25,6 +26,8 @@ The app connects to the **Starling Sandbox API**, fetches recent transaction dat
 - ✅ Displays status updates for each step
 - ✅ Fully typed using TypeScript
 - ✅ Handles API errors gracefully
+- ✅ Automated testing with Vitest and GitHub Actions
+- ✅ Test coverage reporting
 
 ---
 
@@ -32,7 +35,16 @@ The app connects to the **Starling Sandbox API**, fetches recent transaction dat
 
 ### 1. Clone the Repository
 
-- git clone https://github.com/waelkanbar/starling-roundup-app.git
+- git clone [git@github.com:wazzywael/starling-roundup.git](https://github.com/wazzywael/starling-roundup)
 - cd starling-roundup-app
 - npm install
 - npm run dev
+
+## 🧪 Running Tests
+
+- npm test
+
+## 👤 Author
+
+**Wael Kanbar**  
+[GitHub Profile](https://github.com/wazzywael)
