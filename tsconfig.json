@@ -3,5 +3,12 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "types": ["vitest"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node"
+  },
+  "include": ["src", "tests", "**/*.test.ts", "**/*.test.tsx"]
 }

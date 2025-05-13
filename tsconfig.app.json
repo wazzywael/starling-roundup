@@ -7,12 +7,15 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
+    /* Project references */
+    "composite": true,
+    "emitDeclarationOnly": true,
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
     "jsx": "react-jsx",
 
     /* Linting */
