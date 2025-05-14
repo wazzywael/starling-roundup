@@ -42,6 +42,11 @@ The app connects to the **Starling Sandbox API**, fetches recent transaction dat
 
 - npm test
 
+## 🔐 Environment Variables
+
+- Rename `.env.example` to `.env`
+- Add your sandbox access API token
+
 ## 👤 Author
 
 **Wael Kanbar**  
