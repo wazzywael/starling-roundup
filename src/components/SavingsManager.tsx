@@ -92,7 +92,7 @@ const SavingsManager: React.FC<Props> = ({
 
   const { loading, totalSaved, showDialog, showSavings, allGoals } = state;
 
-  const isDisabled = loading || roundUpAmount === 0 || cooldownActive;
+  const canTransfer = !loading && roundUpAmount > 0 && !cooldownActive;
 
   const loadAndDispatchGoals = useCallback(async () => {
     try {
@@ -119,13 +119,23 @@ const SavingsManager: React.FC<Props> = ({
     dispatch({ type: "START_TRANSFER" });
 
     try {
-      const goals = (await getSavingsGoals(accountUid)).savingsGoalList;
-      let goal = goals.find((g) => g.name === "Round-up Saver");
+      const existingGoals = await loadAndDispatchGoals();
+      if (!existingGoals) return;
+
+      let goal = existingGoals.find((g) => g.name === "Round-up Saver");
 
       if (!goal) {
-        toast.success("New Savings Goal Created!");
         const newGoalUid = await createSavingsGoal(accountUid);
-        goal = { savingsGoalUid: newGoalUid } as Savings;
+        toast.success("New Savings Goal Created!");
+
+        const updatedGoals = await loadAndDispatchGoals();
+        if (!updatedGoals) return;
+
+        goal = updatedGoals.find((g) => g.savingsGoalUid === newGoalUid);
+        if (!goal) {
+          toast.error("Unable to locate new goal after creation.");
+          return;
+        }
       }
 
       if (roundUpAmount === 0) {
@@ -135,15 +145,10 @@ const SavingsManager: React.FC<Props> = ({
 
       await addToSavingsGoal(accountUid, goal.savingsGoalUid, roundUpAmount);
 
-      const updatedGoals = await loadAndDispatchGoals();
-      if (!updatedGoals) return;
+      await loadAndDispatchGoals();
       await refreshData();
+
       toast.success("Transfer Successful!");
-      dispatch({
-        type: "TRANSFER_SUCCESS",
-        payload: roundUpAmount,
-        goals: updatedGoals,
-      });
     } catch (err) {
       const axiosError = err as AxiosError;
       if (axiosError.response) {
@@ -169,9 +174,9 @@ const SavingsManager: React.FC<Props> = ({
       <div className="mt-4 space-y-2">
         <button
           onClick={() => dispatch({ type: "TOGGLE_DIALOG" })}
-          disabled={isDisabled}
+          disabled={!canTransfer}
           className={`w-64 py-2 px-4 rounded-md font-medium transition ${
-            isDisabled
+            !canTransfer
               ? "bg-gray-400 text-white cursor-not-allowed"
               : "bg-indigo-600 text-white hover:bg-indigo-700"
           }`}
